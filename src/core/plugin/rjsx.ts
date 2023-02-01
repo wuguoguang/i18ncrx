@@ -1,23 +1,12 @@
-import { NodePath } from "@babel/traverse";
+import { NodePath, TraverseOptions } from "@babel/traverse";
 import * as t from "@babel/types";
+import { PluginConfig, baseType } from "../util";
 
-// const replaceLineBreak = function (value) {
-//   if (typeof value !== "string") {return value;}
-//   return value.replace(/\n/g, " ");
-// };
-
-const baseType = function (v: any) {
-  return Object.prototype.toString.call(v);
-};
-
-// const judgeChinese = function (text) {
-//   return /[\u4e00-\u9fa5]/.test(text);
-// };
-
-function reactPlugin(
+export default function makePluginWithVisitor(
   allTranslateWord: { [key in string]: any },
   randomStr: any,
-  arg: any
+  arg: any,
+  config: PluginConfig
 ) {
   function makeReplace({
     value,
@@ -43,7 +32,7 @@ function reactPlugin(
       },
     });
     return t.callExpression(
-      t.identifier("$st"),
+      t.identifier(config.functionName),
       setObjectExpression(variableObj)
         ? [t.stringLiteral(key), setObjectExpression(variableObj)]
         : ([t.stringLiteral(key)] as any)
@@ -64,9 +53,36 @@ function reactPlugin(
     return null;
   }
 
-  const plugin = function () {
+  const plugin: () => {
+    visitor: TraverseOptions;
+  } = function () {
     return {
       visitor: {
+        ImportDeclaration(path) {
+          const { node } = path;
+          if (node.source.value === "commonUse/Locale") {
+            arg.hasImportModule = true;
+            let flag = false;
+            node.specifiers.forEach((element) => {
+              if (
+                element.type == "ImportSpecifier" &&
+                element.imported.type === "Identifier" &&
+                element.imported.name === "useTranslators"
+              ) {
+                flag = true;
+              }
+            });
+            if (!flag) {
+              node.specifiers.push(
+                t.importSpecifier(
+                  t.identifier("useTranslators"),
+                  t.identifier("useTranslators")
+                )
+              );
+            }
+          }
+          path.skip();
+        },
         JSXText(path: NodePath<t.JSXText>) {
           const { node } = path;
           const value = node.value
@@ -101,7 +117,9 @@ function reactPlugin(
             );
           }
         },
-
+        CallExpression(path) {
+          const { node } = path;
+        },
         StringLiteral(path: NodePath<t.StringLiteral>) {
           const { node } = path;
           const { value } = node;
@@ -136,5 +154,3 @@ function reactPlugin(
 
   return plugin;
 }
-
-export default reactPlugin;

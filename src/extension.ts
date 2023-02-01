@@ -1,8 +1,8 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { supportedLanguageIds ,configurationKey, getContentVal} from './util';
-import { commandEvent } from './core';
+import { supportedLanguageIds ,configurationKey, getContentVal} from './core/util';
+import { commandEvent ,provideDefinition} from './core';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -48,10 +48,8 @@ const defaultConfig: Config = {
 
 
 export async function activate(context: vscode.ExtensionContext) {
-
-    updateContext();
-
     
+    updateContext();
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "p" is now active!');
@@ -61,9 +59,18 @@ export async function activate(context: vscode.ExtensionContext) {
 	// The commandId parameter must match the command field in package.json
 
     let time = vscode.commands.registerCommand('wgg.helloWorld',commandEvent);
-
+    jumpRegister(context);
     context.subscriptions.push(time);
 }
+
+
+function jumpRegister(context: vscode.ExtensionContext){
+    const sel = { scheme: 'file', pattern: '**/*.{js,jsx,ts,tsx,vue}' }
+    context.subscriptions.push(vscode.languages.registerDefinitionProvider(sel, {
+        provideDefinition
+    }));
+}
+
 
 // This method is called when your extension is deactivated
 export function deactivate() {}
