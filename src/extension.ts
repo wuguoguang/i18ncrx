@@ -1,7 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { supportedLanguageIds ,configurationKey} from './util';
+import { supportedLanguageIds ,configurationKey, getContentVal} from './util';
 import { commandEvent } from './core';
 
 // This method is called when your extension is activated
@@ -50,8 +50,7 @@ const defaultConfig: Config = {
 export async function activate(context: vscode.ExtensionContext) {
 
     updateContext();
-     console.log(context);
-     
+
     
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated

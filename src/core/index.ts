@@ -6,7 +6,7 @@ export async function commandEvent(val: any) {
   const dd = vscode.window.activeTextEditor?.document.fileName;
   const code = vscode.window.activeTextEditor?.document.getText();
   if (!code) return;
-  const transformCode = await transform(code);
+  const transformCode = await transform({ sourceCode: code });
   vscode.window.showInformationMessage(dd || "");
 
   vscode.window.activeTextEditor?.edit((edit) => {
@@ -20,7 +20,7 @@ export async function commandEvent(val: any) {
       );
       return edit.replace(
         new vscode.Range(new vscode.Position(0, 0), endLine),
-        transformCode || ""
+         transformCode.code || ""
       );
     }
   });
