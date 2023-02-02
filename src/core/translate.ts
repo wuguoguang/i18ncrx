@@ -9,11 +9,6 @@ type ConfigOption = {
   functionName: string;
 };
 
-const _configOption = {
-  importName: `import { useTranslators } from "commonUse/Locale";`,
-  functionName: "$sst",
-};
-
 async function translate({
   sourceCode,
   isTsx,
@@ -21,14 +16,13 @@ async function translate({
 }: {
   sourceCode: string;
   isTsx: boolean;
-  configOption?: ConfigOption;
+  configOption: ConfigOption;
 }) {
   const args = {
     translateWordsNum: 0,
     hasImportModule: false,
   };
-  const mergedOption = { ..._configOption, ...(configOption || {}) };
-
+  const mergedOption = configOption;
   const allTranslateWord = {};
   const plugin = makePluginWithVisitor(
     allTranslateWord,
@@ -55,12 +49,10 @@ async function translate({
       },
     }).code;
     if (!hasImportModule) {
-      code =mergedOption.importName + code;
+      code = mergedOption.importName + code;
     }
   }
 
-  console.log("allTranslateWord",allTranslateWord);
-  
   const parser = isTsx ? "typescript" : "babel";
 
   return {

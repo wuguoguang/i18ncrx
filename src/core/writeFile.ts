@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import fs from "fs";
 import * as t from "@babel/types";
-
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
 import generator from "@babel/generator";
@@ -22,6 +21,7 @@ export default async function writeFileWithKeys(
     let code: string | undefined = fs.readFileSync(path, "utf-8");
     code = await insertKeys(code, allkeys);
     fs.writeFileSync(path, code);
+    return true
 }
 
 export async function insertKeys(
@@ -57,8 +57,6 @@ export async function insertKeys(
             minimal: true,
         },
     }).code;
-
-    console.log(code);
 
     return await prettierCode(code);
 }

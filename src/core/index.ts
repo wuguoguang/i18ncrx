@@ -1,29 +1,27 @@
 import * as vscode from "vscode";
 import path from "path";
 import transform from "./translate";
-import writeFile from "./writeFile";
+import writeFileWithKeys from "./writeFile";
 import { getFullPath } from "./util";
 import fs from "fs";
+import { config } from "../config";
 
-const config = {
-  importName: `import { useTranslators } from "commonUse/Locale";`,
-  functionName: "$sst",
-  intlFile: "local_en.ts",
-  intlDir: "",
-};
-
-export async function commandEvent(val: any) {
+export async function commandEvent() {
   const filePath = vscode.window.activeTextEditor?.document.fileName;
   const code = vscode.window.activeTextEditor?.document.getText();
   const isTsx = [".ts", ".tsx"].includes(path.extname(filePath || ""));
   if (!code) return;
-  const transformCode = await transform({ sourceCode: code, isTsx });
-
+  const transformCode = await transform({
+    sourceCode: code,
+    isTsx,
+    configOption: config,
+  });
   if (transformCode.isRewriting) {
-    await writeFile(
+    let isWrite = await writeFileWithKeys(
       getFullPath(config.intlDir, config.intlFile),
       transformCode.allTranslateWord
     );
+    if (!isWrite) return;
   }
 
   vscode.window.activeTextEditor?.edit((edit) => {
@@ -47,6 +45,12 @@ export async function commandEvent(val: any) {
   });
 }
 
+export function registerCommandTranslate(context: vscode.ExtensionContext) {
+  context.subscriptions.push(
+    vscode.commands.registerCommand("wgg.helloWorld", commandEvent)
+  );
+}
+
 export function provideDefinition(
   document: vscode.TextDocument,
   position: vscode.Position,
@@ -55,8 +59,6 @@ export function provideDefinition(
   const word = document.getText(document.getWordRangeAtPosition(position));
   const line = document.lineAt(position).text;
   const matchWord = line.includes(`${config.functionName}("${word}`);
-  const fileName = document.fileName;
-
   const path = getFullPath(config.intlDir, config.intlFile);
   if (!path) return;
   const file = fs.readFileSync(path);
@@ -69,11 +71,19 @@ export function provideDefinition(
       break;
     }
   }
-
   if (matchWord) {
     return new vscode.Location(
       vscode.Uri.file(path),
       new vscode.Position(index, 4)
     );
   }
+}
+
+export function registerJump(context: vscode.ExtensionContext) {
+  const sel = { scheme: "file", pattern: "**/*.{js,jsx,ts,tsx,vue}" };
+  context.subscriptions.push(
+    vscode.languages.registerDefinitionProvider(sel, {
+      provideDefinition,
+    })
+  );
 }
